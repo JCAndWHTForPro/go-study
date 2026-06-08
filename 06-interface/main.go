@@ -162,3 +162,82 @@ func printType(v any) {
 		fmt.Printf("未知类型: %v\n", value)
 	}
 }
+
+// ============================================================
+// 【补充】接口断言 & 类型转换 完整总结
+// ============================================================
+//
+// 一、类型断言（Type Assertion）—— 从接口中提取具体类型
+// ---------------------------------------------------------------
+// 语法：value, ok := 接口变量.(目标类型)
+//
+// 1. 安全断言（推荐，带 ok 检查）
+//    str, ok := v.(string)
+//    if ok {
+//        // 断言成功，str 是 string 类型
+//    }
+//
+// 2. 非安全断言（不带 ok，失败直接 panic）
+//    str := v.(string)  // 如果 v 不是 string → panic!
+//
+// 3. 断言到接口类型（判断是否实现了某个接口）
+//    s, ok := v.(Shape)  // v 是否实现了 Shape 接口？
+//    if ok {
+//        fmt.Println(s.Area())  // 可以调 Shape 的方法了
+//    }
+//
+// 二、type switch —— 多类型分支判断
+// ---------------------------------------------------------------
+// 语法：switch value := v.(type) { case 类型: ... }
+//
+//    switch value := v.(type) {
+//    case int:          // value 自动是 int 类型
+//    case string:       // value 自动是 string 类型
+//    case Shape:        // value 自动是 Shape 接口类型
+//    case nil:          // 接口变量是 nil
+//    default:           // 都不匹配
+//    }
+//
+// 注意：.(type) 只能用在 switch 里，不能单独写 v.(type)
+//
+// 三、类型断言 vs 类型转换 的区别
+// ---------------------------------------------------------------
+//
+// 类型断言：接口 → 具体类型（从接口里"取出来"）
+//   var v any = "hello"
+//   s := v.(string)        // ✅ 接口 → string
+//
+// 类型转换：具体类型 → 具体类型（数值之间互转）
+//   var a int = 42
+//   b := float64(a)        // ✅ int → float64
+//   c := int64(a)          // ✅ int → int64
+//   s := string([]byte{})  // ✅ []byte → string
+//
+// 区别：
+//   类型转换 float64(a)   → 左右都是具体类型，编译期确定
+//   类型断言 v.(string)   → 左边必须是接口类型，运行时检查
+//   两者语法不同，不能混用！
+//
+// 四、实际使用场景
+// ---------------------------------------------------------------
+//
+// 场景 1：处理 any 参数
+//   func process(v any) {
+//       if num, ok := v.(int); ok { ... }
+//   }
+//
+// 场景 2：errors.As（从 error 接口提取自定义错误类型）
+//   var divErr *DivideError
+//   if errors.As(err, &divErr) { ... }
+//
+// 场景 3：判断某个值是否实现了可选接口
+//   if closer, ok := reader.(io.Closer); ok {
+//       defer closer.Close()
+//   }
+//
+// 场景 4：JSON 反序列化后的 any 值
+//   var data any
+//   json.Unmarshal([]byte(`{"name":"Tom"}`), &data)
+//   m := data.(map[string]any)        // JSON 对象 → map
+//   name := m["name"].(string)        // 取出具体值
+// ============================================================
