@@ -1,0 +1,1 @@
+- [用户背景](user_background.md) — 10年+Java资深工程师，菜鸟网络，正在转型学习Go，可用Java类比解释
