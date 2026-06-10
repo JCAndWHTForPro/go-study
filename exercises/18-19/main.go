@@ -1,9 +1,14 @@
 package main
 
-/*
-## 第 18~19 课：GORM
+import (
+	"go-study/exercises/18-19/db"
+	"go-study/exercises/18-19/request"
+)
 
-### 题 18~19.1 博客系统模型（⭐⭐⭐）
+/*
+## 第 18-19 课：GORM
+
+### 题 18-19.1 博客系统模型（⭐⭐⭐）
 
 用 GORM 实现一个简易博客的数据模型：
 
@@ -23,7 +28,7 @@ package main
 
 ### 题 19.1 Gin + GORM 整合（⭐⭐⭐）
 
-把第 18~19 题的博客系统改成 Gin API 服务：
+把第 18-19 题的博客系统改成 Gin API 服务：
 
 - `GET /api/users/:id/posts` — 查某用户的所有文章（Preload 评论）
 - `POST /api/posts` — 发文章（JSON: title, content, user_id）
@@ -31,4 +36,7 @@ package main
 - 加一个日志中间件记录请求耗时
 - 路由分组 `/api`
 */
-func main() {}
+func main() {
+	db.InitDB("root:root123@tcp(127.0.0.1:3306)/go_study?charset=utf8mb4&parseTime=True")
+	request.InitRequestRegister()
+}

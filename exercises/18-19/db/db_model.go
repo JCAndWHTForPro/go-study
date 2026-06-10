@@ -30,7 +30,7 @@ type Post struct {
 	gorm.Model
 	Title    string
 	Content  string
-	UserID   uint
+	UserID   uint `gorm:"not null"`
 	User     User
 	Comments []Comment
 }
@@ -38,15 +38,21 @@ type Post struct {
 type Comment struct {
 	gorm.Model
 	Content string
-	PostID  uint
+	PostID  uint `gorm:"not null"`
 	Post    Post
-	UserID  uint
+	UserID  uint `gorm:"not null"`
 	User    User
 }
 
 var DB *gorm.DB
 
-func queryPostCommentAdnCommentUser(postId uint) ([]Comment, map[uint]string) {
+func QueryAllUserPostAndComment(userId uint) []Post {
+	var posts []Post
+	DB.Model(&Post{}).Preload("Comments").Where("user_id = ?", userId).Find(&posts)
+	return posts
+}
+
+func QueryPostCommentAdnCommentUser(postId uint) ([]Comment, map[uint]string) {
 	var comments []Comment
 	DB.Model(&Comment{}).Joins("Post").Joins("User").Where("post_id = ?", postId).Find(&comments)
 	mapp := map[uint]string{}
@@ -60,7 +66,7 @@ func queryPostCommentAdnCommentUser(postId uint) ([]Comment, map[uint]string) {
 	return comments, mapp
 
 }
-func queryUserPostAndComment(userId uint) ([]Post, map[uint][]Comment) {
+func QueryUserPostAndComment(userId uint) ([]Post, map[uint][]Comment) {
 	var posts []Post
 	tx := DB.Where("user_id = ?", userId).Find(&posts)
 	if tx.RowsAffected == 0 {
@@ -75,12 +81,39 @@ func queryUserPostAndComment(userId uint) ([]Post, map[uint][]Comment) {
 	}
 	return posts, commentMap
 }
-func createUser(user *User) uint {
+func CreateUser(user *User) uint {
 	DB.Create(user)
 	return user.ID
 }
+func CreatePost(post *Post) (uint, error) {
+	userId := post.UserID
+	var user []User
+	DB.Find(&user, userId)
+	if len(user) == 0 {
+		return 0, fmt.Errorf("没有查到对应的用户，请注册：%d", userId)
+	}
+	DB.Create(post)
+	return post.ID, nil
+}
 
-func initDB(dsn string) error {
+func CreateComment(comment *Comment) (uint, error) {
+	postId := comment.PostID
+	userID := comment.UserID
+	var posts []Post
+	var users []User
+	DB.Find(&posts, postId)
+	if len(posts) == 0 {
+		return 0, fmt.Errorf("不能发表没有文章的评论")
+	}
+	DB.Find(&users, userID)
+	if len(users) == 0 {
+		return 0, fmt.Errorf("用户id不对，请注册")
+	}
+	DB.Create(&comment)
+	return comment.ID, nil
+}
+
+func InitDB(dsn string) error {
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {

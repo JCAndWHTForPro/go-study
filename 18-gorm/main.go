@@ -1,5 +1,5 @@
-// 第 18~19 课：GORM（Go 最流行的 ORM 框架）
-// 运行方式：go run ./18~19-gorm
+// 第 18-19 课：GORM（Go 最流行的 ORM 框架）
+// 运行方式：go run ./18-19-gorm
 //
 // 前置条件：
 //  1. 本地 MySQL 已启动，端口 3306，用户 root，密码 root123
@@ -78,7 +78,7 @@
 //	`gorm:"type:varchar(100)"`    → 指定列类型
 //	`gorm:"not null"`             → 非空约束
 //	`gorm:"uniqueIndex"`          → 唯一索引
-//	`gorm:"default:18~19"`           → 默认值
+//	`gorm:"default:18-19"`           → 默认值
 //
 // ▶ 软删除：
 //
@@ -336,7 +336,7 @@ func main() {
 	fmt.Println("\n--- 多表关联 ---")
 	demonstrateAssociations(db)
 
-	fmt.Println("\n✅ 第 18~19 课全部完成！")
+	fmt.Println("\n✅ 第 18-19 课全部完成！")
 }
 
 // demonstrateAssociations 演示 GORM 多表关联查询

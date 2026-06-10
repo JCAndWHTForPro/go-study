@@ -116,7 +116,7 @@ func main() {
 	}
 
 	// ===== 3. 空接口 any（interface{}）：可以存任意类型 =====
-	// any 是 interface{} 的别名（Go 1.18~19+），相当于 Java 的 Object
+	// any 是 interface{} 的别名（Go 1.18-19+），相当于 Java 的 Object
 	var anything any
 	anything = 42
 	fmt.Println("空接口存 int:", anything)

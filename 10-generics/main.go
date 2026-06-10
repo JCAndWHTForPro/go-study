@@ -1,4 +1,4 @@
-// 第 10 课：泛型（Go 1.18~19+）
+// 第 10 课：泛型（Go 1.18-19+）
 // 运行方式：go run ./10-generics
 //
 // 泛型解决什么问题？
@@ -137,16 +137,16 @@ func Contains[T comparable](slice []T, target T) bool {
 // Ordered 约束：支持 < > 比较的类型（Go 1.21 后标准库有 cmp.Ordered，这里自定义演示）
 type Ordered interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
-	~float32 | ~float64 |
-	~string
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64 |
+		~string
 }
 
 // Number 约束：只允许数字类型
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
-	~float32 | ~float64
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64
 }
 
 // Sum 对数字切片求和
