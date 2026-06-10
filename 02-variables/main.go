@@ -89,7 +89,7 @@ func main() {
 
 	// ===== 5. byte 与 rune =====
 	var ch byte = 'A' // byte = uint8，存 ASCII
-	var r rune = '中' // rune = int32，存一个 Unicode 字符
+	var r rune = '中'  // rune = int32，存一个 Unicode 字符
 	fmt.Printf("byte 'A' 的值=%d, rune '中' 的码点=%d\n", ch, r)
 
 	// ===== 6. 用 %T 查看变量的类型 =====
@@ -136,8 +136,8 @@ func lookup(word string) (int, bool) {
 // ---------------------------------------------------------------
 // 通用：
 //   %v   默认格式（万能，啥类型都行）
-//   %+v  结构体带字段名：{Name:Tom Age:18}
-//   %#v  Go 语法格式：main.User{Name:"Tom", Age:18}
+//   %+v  结构体带字段名：{Name:Tom Age:18~19}
+//   %#v  Go 语法格式：main.User{Name:"Tom", Age:18~19}
 //   %T   打印变量的类型
 //   %%   输出一个字面 % 号
 //

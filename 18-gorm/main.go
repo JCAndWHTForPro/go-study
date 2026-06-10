@@ -1,124 +1,137 @@
-// 第 18 课：GORM（Go 最流行的 ORM 框架）
-// 运行方式：go run ./18-gorm
+// 第 18~19 课：GORM（Go 最流行的 ORM 框架）
+// 运行方式：go run ./18~19-gorm
 //
 // 前置条件：
-//   1. 本地 MySQL 已启动，端口 3306，用户 root，密码 root123
-//   2. 已有数据库 go_study
-//   3. 已安装：go get gorm.io/gorm gorm.io/driver/mysql
+//  1. 本地 MySQL 已启动，端口 3306，用户 root，密码 root123
+//  2. 已有数据库 go_study
+//  3. 已安装：go get gorm.io/gorm gorm.io/driver/mysql
 //
 // GORM vs database/sql（第 17 课）：
-//   database/sql → 手写 SQL，灵活但繁琐（类似 Java JDBC）
-//   GORM         → 用 Go 代码操作数据库，自动生成 SQL（类似 Java MyBatis-Plus / JPA）
+//
+//	database/sql → 手写 SQL，灵活但繁琐（类似 Java JDBC）
+//	GORM         → 用 Go 代码操作数据库，自动生成 SQL（类似 Java MyBatis-Plus / JPA）
 //
 // ============================================================
 // 【总结】GORM 核心概念
 // ------------------------------------------------------------
 //
 // ▶ 连接：
-//   gorm.Open(mysql.Open(dsn), &gorm.Config{})  → 返回 *gorm.DB
-//   和 database/sql 一样底层是连接池
+//
+//	gorm.Open(mysql.Open(dsn), &gorm.Config{})  → 返回 *gorm.DB
+//	和 database/sql 一样底层是连接池
 //
 // ▶ 模型定义（struct → 表）：
-//   type User struct {
-//       gorm.Model            // 内嵌：自动添加 ID、CreatedAt、UpdatedAt、DeletedAt
-//       Name string           // 字段名 → 列名：Name → name（自动蛇形转换）
-//       Age  int
-//   }
-//   gorm.Model 包含：
-//     ID        uint           `gorm:"primaryKey"`
-//     CreatedAt time.Time      // 创建时自动填充
-//     UpdatedAt time.Time      // 更新时自动填充
-//     DeletedAt gorm.DeletedAt // 软删除：删除不真删，只标记时间
+//
+//	type User struct {
+//	    gorm.Model            // 内嵌：自动添加 ID、CreatedAt、UpdatedAt、DeletedAt
+//	    Name string           // 字段名 → 列名：Name → name（自动蛇形转换）
+//	    Age  int
+//	}
+//	gorm.Model 包含：
+//	  ID        uint           `gorm:"primaryKey"`
+//	  CreatedAt time.Time      // 创建时自动填充
+//	  UpdatedAt time.Time      // 更新时自动填充
+//	  DeletedAt gorm.DeletedAt // 软删除：删除不真删，只标记时间
 //
 // ▶ 自动建表：
-//   db.AutoMigrate(&User{})  → 根据 struct 自动创建/更新表结构
+//
+//	db.AutoMigrate(&User{})  → 根据 struct 自动创建/更新表结构
 //
 // ▶ CRUD 操作：
-//   db.Create(&user)                          → INSERT
-//   db.First(&user, id)                       → SELECT ... WHERE id=? LIMIT 1
-//   db.Find(&users)                           → SELECT *（查全部）
-//   db.Where("name = ?", "张三").Find(&users) → SELECT ... WHERE name='张三'
-//   db.Model(&user).Update("age", 30)         → UPDATE ... SET age=30
-//   db.Model(&user).Updates(User{Age:30})     → UPDATE（多字段）
-//   db.Delete(&user, id)                       → 软删除（UPDATE deleted_at）
-//   db.Unscoped().Delete(&user, id)            → 硬删除（真正 DELETE）
+//
+//	db.Create(&user)                          → INSERT
+//	db.First(&user, id)                       → SELECT ... WHERE id=? LIMIT 1
+//	db.Find(&users)                           → SELECT *（查全部）
+//	db.Where("name = ?", "张三").Find(&users) → SELECT ... WHERE name='张三'
+//	db.Model(&user).Update("age", 30)         → UPDATE ... SET age=30
+//	db.Model(&user).Updates(User{Age:30})     → UPDATE（多字段）
+//	db.Delete(&user, id)                       → 软删除（UPDATE deleted_at）
+//	db.Unscoped().Delete(&user, id)            → 硬删除（真正 DELETE）
 //
 // ▶ 链式调用（Builder 模式）：
-//   db.Where(...).Order(...).Limit(...).Find(&results)
-//   每个方法返回 *gorm.DB，可以一直链下去
+//
+//	db.Where(...).Order(...).Limit(...).Find(&results)
+//	每个方法返回 *gorm.DB，可以一直链下去
 //
 // ▶ 自定义表名（三种方式）：
-//   方式一（推荐）：给 struct 实现 TableName() 方法
-//     func (Product) TableName() string { return "my_products" }
-//     → 隐式接口，实现了方法就自动生效，不需要 implements
 //
-//   方式二：查询时临时指定
-//     db.Table("my_custom_table").Find(&products)
+//	方式一（推荐）：给 struct 实现 TableName() 方法
+//	  func (Product) TableName() string { return "my_products" }
+//	  → 隐式接口，实现了方法就自动生效，不需要 implements
 //
-//   方式三：全局配置命名策略
-//     gorm.Open(dsn, &gorm.Config{
-//         NamingStrategy: schema.NamingStrategy{
-//             TablePrefix:   "t_",   // 所有表加前缀 → t_products
-//             SingularTable: true,   // 不用复数 → product（不加 s）
-//         },
-//     })
+//	方式二：查询时临时指定
+//	  db.Table("my_custom_table").Find(&products)
 //
-//   默认规则：struct 名 → 复数 + 蛇形（Product → products, UserOrder → user_orders）
+//	方式三：全局配置命名策略
+//	  gorm.Open(dsn, &gorm.Config{
+//	      NamingStrategy: schema.NamingStrategy{
+//	          TablePrefix:   "t_",   // 所有表加前缀 → t_products
+//	          SingularTable: true,   // 不用复数 → product（不加 s）
+//	      },
+//	  })
+//
+//	默认规则：struct 名 → 复数 + 蛇形（Product → products, UserOrder → user_orders）
 //
 // ▶ struct tag：
-//   `gorm:"column:user_name"`     → 指定列名
-//   `gorm:"type:varchar(100)"`    → 指定列类型
-//   `gorm:"not null"`             → 非空约束
-//   `gorm:"uniqueIndex"`          → 唯一索引
-//   `gorm:"default:18"`           → 默认值
+//
+//	`gorm:"column:user_name"`     → 指定列名
+//	`gorm:"type:varchar(100)"`    → 指定列类型
+//	`gorm:"not null"`             → 非空约束
+//	`gorm:"uniqueIndex"`          → 唯一索引
+//	`gorm:"default:18~19"`           → 默认值
 //
 // ▶ 软删除：
-//   GORM 默认使用软删除——Delete 只是设置 deleted_at 字段
-//   查询时自动过滤 deleted_at IS NOT NULL 的记录
-//   想查被软删的记录：db.Unscoped().Find(&users)
-//   想真删：db.Unscoped().Delete(&user, id)
+//
+//	GORM 默认使用软删除——Delete 只是设置 deleted_at 字段
+//	查询时自动过滤 deleted_at IS NOT NULL 的记录
+//	想查被软删的记录：db.Unscoped().Find(&users)
+//	想真删：db.Unscoped().Delete(&user, id)
 //
 // ▶ 多表关联（重要！）：
-//   定义关联：通过 struct 字段名约定，不用配置文件
-//     type Author struct {
-//         gorm.Model
-//         Name  string
-//         Books []Book     // Has Many：一个作者有多本书
-//     }
-//     type Book struct {
-//         gorm.Model
-//         Title    string
-//         AuthorID uint    // 外键：字段名 = 关联类型名+ID（自动推断）
-//         Author   Author  // Belongs To：一本书属于一个作者
-//     }
 //
-//   查询关联数据：
-//     db.Preload("Books").Find(&authors)            → 预加载：查作者时自动查书
-//     db.Preload("Author").First(&book)              → 反向：查书时自动查作者
-//     db.Preload("Books", "title LIKE ?", "%x%")     → 条件预加载
-//     db.Joins("Author").Where("authors.name=?", x)  → JOIN 查询
+//	定义关联：通过 struct 字段名约定，不用配置文件
+//	  type Author struct {
+//	      gorm.Model
+//	      Name  string
+//	      Books []Book     // Has Many：一个作者有多本书
+//	  }
+//	  type Book struct {
+//	      gorm.Model
+//	      Title    string
+//	      AuthorID uint    // 外键：字段名 = 关联类型名+ID（自动推断）
+//	      Author   Author  // Belongs To：一本书属于一个作者
+//	  }
 //
-//   关联类型：
-//     Has Many    → Author 有 []Book        一对多
-//     Belongs To  → Book 有 Author+AuthorID  属于
-//     Has One     → User 有 Profile          一对一
-//     Many2Many   → User 有 []Role `gorm:"many2many:user_roles"`  多对多
+//	查询关联数据：
+//	  db.Preload("Books").Find(&authors)            → 预加载：查作者时自动查书
+//	  db.Preload("Author").First(&book)              → 反向：查书时自动查作者
+//	  db.Preload("Books", "title LIKE ?", "%x%")     → 条件预加载
+//	  db.Joins("Author").Where("authors.name=?", x)  → JOIN 查询
+//
+//	关联类型：
+//	  Has Many    → Author 有 []Book        一对多
+//	  Belongs To  → Book 有 Author+AuthorID  属于
+//	  Has One     → User 有 Profile          一对一
+//	  Many2Many   → User 有 []Role `gorm:"many2many:user_roles"`  多对多
 //
 // ▶ Preload vs Joins：
-//     Preload → 额外发一条 SELECT（两条 SQL），适合加载关联数据展示
-//     Joins   → 用 SQL JOIN（一条 SQL），适合用关联表的字段做 WHERE 过滤
+//
+//	Preload → 额外发一条 SELECT（两条 SQL），适合加载关联数据展示
+//	Joins   → 用 SQL JOIN（一条 SQL），适合用关联表的字段做 WHERE 过滤
 //
 // ▶ 对比 Java：
-//   Java MyBatis-Plus               GORM
-//   @TableName("users")             表名自动从 struct 名推断（Users → users）
-//   @TableId(type=AUTO)             gorm.Model 自带 ID
-//   baseMapper.selectById(1)        db.First(&user, 1)
-//   baseMapper.insert(user)         db.Create(&user)
-//   lambdaQuery().eq("name","张三") db.Where("name = ?", "张三")
-//   @TableLogic                     gorm.DeletedAt（软删除）
-//   逻辑删除自动过滤               同样自动过滤
-//   @TableField(exist=false)+嵌套查 Preload("关联名")
-//   XML 里写 JOIN                   db.Joins("关联名").Where(...)
+//
+//	Java MyBatis-Plus               GORM
+//	@TableName("users")             表名自动从 struct 名推断（Users → users）
+//	@TableId(type=AUTO)             gorm.Model 自带 ID
+//	baseMapper.selectById(1)        db.First(&user, 1)
+//	baseMapper.insert(user)         db.Create(&user)
+//	lambdaQuery().eq("name","张三") db.Where("name = ?", "张三")
+//	@TableLogic                     gorm.DeletedAt（软删除）
+//	逻辑删除自动过滤               同样自动过滤
+//	@TableField(exist=false)+嵌套查 Preload("关联名")
+//	XML 里写 JOIN                   db.Joins("关联名").Where(...)
+//
 // ============================================================
 package main
 
@@ -134,9 +147,9 @@ import (
 // Product 商品表（演示自定义字段标签）
 type Product struct {
 	gorm.Model        // 内嵌 ID + CreatedAt + UpdatedAt + DeletedAt
-	Name  string `gorm:"type:varchar(100);not null"` // 商品名
-	Price int    `gorm:"not null"`                   // 价格（分）
-	Stock int    `gorm:"default:0"`                  // 库存，默认 0
+	Name       string `gorm:"type:varchar(100);not null"` // 商品名
+	Price      int    `gorm:"not null"`                   // 价格（分）
+	Stock      int    `gorm:"default:0"`                  // 库存，默认 0
 }
 
 // ===== 关联模型定义 =====
@@ -323,7 +336,7 @@ func main() {
 	fmt.Println("\n--- 多表关联 ---")
 	demonstrateAssociations(db)
 
-	fmt.Println("\n✅ 第 18 课全部完成！")
+	fmt.Println("\n✅ 第 18~19 课全部完成！")
 }
 
 // demonstrateAssociations 演示 GORM 多表关联查询

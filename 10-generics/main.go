@@ -1,46 +1,51 @@
-// 第 10 课：泛型（Go 1.18+）
+// 第 10 课：泛型（Go 1.18~19+）
 // 运行方式：go run ./10-generics
 //
 // 泛型解决什么问题？
-//   没有泛型时，想写一个「对 int 和 float64 都适用的求最大值函数」，
-//   要么写两个函数（maxInt / maxFloat），要么用 any + 类型断言（丑且不安全）。
-//   泛型让你只写一次，编译器自动适配多种类型，且保持类型安全。
+//
+//	没有泛型时，想写一个「对 int 和 float64 都适用的求最大值函数」，
+//	要么写两个函数（maxInt / maxFloat），要么用 any + 类型断言（丑且不安全）。
+//	泛型让你只写一次，编译器自动适配多种类型，且保持类型安全。
 //
 // ============================================================
 // 【知识点】Go 的比较规则 & 与泛型约束的关系
 // ------------------------------------------------------------
 //
 // 一、相等比较 == !=（哪些类型能比）
-//   ✅ 基本类型：int / float / bool / string / byte / rune
-//   ✅ 指针 *T：比较的是地址是否相同
-//   ✅ channel：是否是同一个 channel
-//   ✅ 接口 interface：类型和值都相同才 true
-//   ✅ 数组 [3]int：逐元素比较（前提：元素类型可比较）
-//   ✅ 结构体 struct：逐字段比较（前提：所有字段可比较）
-//   ❌ 切片 []T：只能和 nil 比，不能互相比
-//   ❌ map：只能和 nil 比
-//   ❌ 函数 func：只能和 nil 比
+//
+//	✅ 基本类型：int / float / bool / string / byte / rune
+//	✅ 指针 *T：比较的是地址是否相同
+//	✅ channel：是否是同一个 channel
+//	✅ 接口 interface：类型和值都相同才 true
+//	✅ 数组 [3]int：逐元素比较（前提：元素类型可比较）
+//	✅ 结构体 struct：逐字段比较（前提：所有字段可比较）
+//	❌ 切片 []T：只能和 nil 比，不能互相比
+//	❌ map：只能和 nil 比
+//	❌ 函数 func：只能和 nil 比
 //
 // 二、排序比较 > < >= <=（只有极少类型能排序）
-//   ✅ 整数（int/int8/int16/int32/int64/uint...）
-//   ✅ 浮点数（float32/float64）
-//   ✅ 字符串 string（按字典序）
-//   ❌ 其他所有类型（bool/struct/数组/指针/接口...）
+//
+//	✅ 整数（int/int8/int16/int32/int64/uint...）
+//	✅ 浮点数（float32/float64）
+//	✅ 字符串 string（按字典序）
+//	❌ 其他所有类型（bool/struct/数组/指针/接口...）
 //
 // 三、与泛型约束的对应关系
-//   约束             能做什么             对应哪些类型
-//   any             啥都不能比            所有类型
-//   comparable      能 == !=            基本类型+指针+channel+数组+结构体
-//   Ordered(自定义)  能 > < >= <=        整数+浮点+字符串
-//   Number(自定义)   能 + - * /          整数+浮点
+//
+//	约束             能做什么             对应哪些类型
+//	any             啥都不能比            所有类型
+//	comparable      能 == !=            基本类型+指针+channel+数组+结构体
+//	Ordered(自定义)  能 > < >= <=        整数+浮点+字符串
+//	Number(自定义)   能 + - * /          整数+浮点
 //
 // 四、易踩的坑
-//   1) 切片/map 不能 ==：想比较内容要用 slices.Equal (Go 1.21+) 或逐个比
-//   2) 含不可比较字段的结构体也不能 ==：
-//      type A struct { Data []int } → A{} == A{} 编译报错（Data 是切片）
-//      type B struct { Name string } → B{} == B{} ✅（所有字段可比较）
-//   3) 能 == 的类型远多于能 > 的类型：
-//      结构体/数组可以 == 但不能 >（所以 comparable ≠ Ordered）
+//  1. 切片/map 不能 ==：想比较内容要用 slices.Equal (Go 1.21+) 或逐个比
+//  2. 含不可比较字段的结构体也不能 ==：
+//     type A struct { Data []int } → A{} == A{} 编译报错（Data 是切片）
+//     type B struct { Name string } → B{} == B{} ✅（所有字段可比较）
+//  3. 能 == 的类型远多于能 > 的类型：
+//     结构体/数组可以 == 但不能 >（所以 comparable ≠ Ordered）
+//
 // ============================================================
 package main
 
@@ -132,16 +137,16 @@ func Contains[T comparable](slice []T, target T) bool {
 // Ordered 约束：支持 < > 比较的类型（Go 1.21 后标准库有 cmp.Ordered，这里自定义演示）
 type Ordered interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
-		~float32 | ~float64 |
-		~string
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+	~float32 | ~float64 |
+	~string
 }
 
 // Number 约束：只允许数字类型
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
-		~float32 | ~float64
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+	~float32 | ~float64
 }
 
 // Sum 对数字切片求和

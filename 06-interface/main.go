@@ -11,32 +11,34 @@
 //
 // ▶ 接口赋值：取决于方法是值接收者还是指针接收者实现的
 //
-//   值接收者实现：值和指针都能赋给接口
-//     func (c Circle) Area() float64 { ... }
-//     var s Shape = Circle{}   // ✅ 值 → 接口
-//     var s Shape = &Circle{}  // ✅ 指针 → 接口（值接收者的方法包含在指针的方法集里）
+//	值接收者实现：值和指针都能赋给接口
+//	  func (c Circle) Area() float64 { ... }
+//	  var s Shape = Circle{}   // ✅ 值 → 接口
+//	  var s Shape = &Circle{}  // ✅ 指针 → 接口（值接收者的方法包含在指针的方法集里）
 //
-//   指针接收者实现：只有指针能赋给接口
-//     func (d *Dog) Speak() string { ... }
-//     var a Animal = &Dog{}    // ✅ 指针 → 接口
-//     var a Animal = Dog{}     // ❌ 编译报错！值的方法集里没有指针接收者的方法
+//	指针接收者实现：只有指针能赋给接口
+//	  func (d *Dog) Speak() string { ... }
+//	  var a Animal = &Dog{}    // ✅ 指针 → 接口
+//	  var a Animal = Dog{}     // ❌ 编译报错！值的方法集里没有指针接收者的方法
 //
-//   口诀：值接收者→都行；指针接收者→只能指针。
+//	口诀：值接收者→都行；指针接收者→只能指针。
 //
 // ▶ any（interface{}）参数：啥都能接，值和指针都行
-//   func Decode(v any) error   // any 参数
-//   Decode(user)    // ✅ 传值
-//   Decode(&user)   // ✅ 传指针
-//   两种都能编译通过，但传哪个取决于「业务需要」：
-//   → 如果函数需要修改你的变量（如 json.Decode、json.Unmarshal），必须传 &
-//     因为传值只是副本，函数改了也白改，传指针才能改到原变量
-//   → 如果函数只读不写（如 json.Marshal、fmt.Println），传值即可
 //
-//   常见的「必须传 &」的 any 参数函数：
-//     json.Unmarshal(data, &result)   // 要把 JSON 填进 result
-//     json.NewDecoder(r).Decode(&obj) // 要把 JSON 填进 obj
-//     fmt.Scan(&input)                // 要把用户输入写进 input
-//     db.QueryRow(...).Scan(&col)     // 要把查询结果写进 col
+//	func Decode(v any) error   // any 参数
+//	Decode(user)    // ✅ 传值
+//	Decode(&user)   // ✅ 传指针
+//	两种都能编译通过，但传哪个取决于「业务需要」：
+//	→ 如果函数需要修改你的变量（如 json.Decode、json.Unmarshal），必须传 &
+//	  因为传值只是副本，函数改了也白改，传指针才能改到原变量
+//	→ 如果函数只读不写（如 json.Marshal、fmt.Println），传值即可
+//
+//	常见的「必须传 &」的 any 参数函数：
+//	  json.Unmarshal(data, &result)   // 要把 JSON 填进 result
+//	  json.NewDecoder(r).Decode(&obj) // 要把 JSON 填进 obj
+//	  fmt.Scan(&input)                // 要把用户输入写进 input
+//	  db.QueryRow(...).Scan(&col)     // 要把查询结果写进 col
+//
 // ============================================================
 package main
 
@@ -114,7 +116,7 @@ func main() {
 	}
 
 	// ===== 3. 空接口 any（interface{}）：可以存任意类型 =====
-	// any 是 interface{} 的别名（Go 1.18+），相当于 Java 的 Object
+	// any 是 interface{} 的别名（Go 1.18~19+），相当于 Java 的 Object
 	var anything any
 	anything = 42
 	fmt.Println("空接口存 int:", anything)
